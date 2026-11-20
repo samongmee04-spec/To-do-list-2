@@ -307,6 +307,15 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none}
 .obtns button{flex:1;height:44px;border:0;border-radius:12px;font-family:inherit;font-size:13.5px;
   font-weight:700;cursor:pointer}
 #oPin{background:#e3e5e9;color:#2b2f36}
+.ocolor{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:12px;font-weight:700;color:#6b7380;flex-wrap:wrap}
+.osw{display:flex;gap:6px;flex-wrap:wrap}
+.osw i{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.osw i.on{border-color:#1c1e22}
+.ocust{position:relative;width:26px;height:26px;border-radius:50%;background:#fff;border:1.5px dashed #9ba1ab;
+  display:grid;place-items:center;cursor:pointer;font-size:15px;color:#6b7380;line-height:1}
+.ocust input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+#oColorReset{margin-left:auto;border:0;background:#e3e5e9;color:#2b2f36;border-radius:9px;height:28px;padding:0 10px;
+  font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer}
 #oDel{background:#f6e2e2;color:#a9433f;flex:0 0 72px}
 #oSave{background:#1c1e22;color:#fff}
 
@@ -1318,6 +1327,12 @@ body.note-open{overflow:hidden;}
     <div class="olab" id="oLab"></div>
     <input type="text" id="oTitle" placeholder="หัวข้อสั้น ๆ">
     <textarea id="oText" placeholder="รายละเอียดเพิ่มเติม…"></textarea>
+    <div class="ocolor" id="oColorRow">
+      <span>สีโน้ต</span>
+      <div class="osw" id="oSw"></div>
+      <label class="ocust" title="เลือกสีเอง">+<input type="color" id="oColorPick"></label>
+      <button type="button" id="oColorReset">ค่าเริ่มต้น</button>
+    </div>
     <div class="obtns">
       <button id="oDel">ลบ</button>
       <button id="oPin">แปะบนบอร์ด</button>
@@ -2495,7 +2510,10 @@ function migrateMn(){
    ตำแหน่งโน้ตบนบอร์ดซิงก์ผ่าน Firebase (board/) เก็บเป็นสัดส่วน 0–1 ของบอร์ด
    ============================================================ */
 const BKEY='mn_board_v1';
-const NOTE_COLORS=['#ffe08a','#ffb5b0','#b7e4c7','#bcd9ff','#e0c6ff','#ffd2a3','#c9ecec'];
+const NOTE_COLORS=['#ff8a80','#8ec5ff','#ffe08a','#b7e4c7','#e0c6ff','#ffd2a3','#c9ecec'];
+/* สีเริ่มต้นของโน้ตบนบอร์ด: URGENT = แดง, WAIT = ฟ้า — ถ้าเลือกสีเอง (custom) จะใช้สีที่เลือก */
+const LIST_COLOR={urgent:'#ff8a80',wait:'#8ec5ff'};
+const noteColor=(b,list)=>(b.custom&&b.color)?b.color:LIST_COLOR[list];
 const LISTS={urgent:{label:'URGENT!',tag:'URG',groups:['urgent']},
              wait:{label:'WAIT',tag:'WAIT',groups:['wait','today']}};
 const SCH_START=6, SCH_END=23, HOUR_W=64, NOTE_W=106, NOTE_H=84;
@@ -2598,7 +2616,7 @@ function renderList(list){
 function pinToBoard(list,id,xf,yf){
   if(OF.board.some(b=>b.ref===id)) return;
   OF.board.push({id:uid(),list,ref:id,x:xf==null?Math.random()*.6+.05:xf,y:yf==null?Math.random()*.5+.05:yf,
-                 color:NOTE_COLORS[Math.floor(Math.random()*NOTE_COLORS.length)]});
+                 color:LIST_COLOR[list]});
   saveOffice(); renderOffice();
 }
 function renderBoard(){
@@ -2617,7 +2635,7 @@ function renderBoard(){
     const w=b.w||NOTE_W, h=b.h||NOTE_H;
     const el=document.createElement('div');
     el.className='snote'+(it.status==='done'?' done':'');
-    el.style.background=b.color;
+    el.style.background=noteColor(b,listOfTask(it));
     el.style.width=w+'px'; el.style.height=h+'px';
     el.style.setProperty('--lines',Math.max(2,Math.floor((h-36)/16)));
     el.style.left=Math.round(b.x*Math.max(0,W-w))+'px';
@@ -2706,7 +2724,7 @@ function beginDrag(ev,payload,onMove){
   drag={payload,onMove,moved:false};
   const g=document.createElement('div');
   g.className='dragGhost';
-  g.style.background='#ffe08a';
+  g.style.background=LIST_COLOR[payload.list]||'#ffe08a';
   g.textContent=it.text;
   document.body.appendChild(g); drag.ghost=g;
   posGhost(ev.clientX,ev.clientY);
@@ -2896,8 +2914,26 @@ function openItem(list,id){
   $('#oText').value=it.detail||'';
   const pinned=OF.board.some(b=>b.ref===id);
   $('#oPin').style.display=pinned?'none':'';
+  $('#oColorRow').style.display=pinned?'':'none';
+  if(pinned) renderColorRow();
   $('#oPin').textContent='แปะบนบอร์ด';
   $('#osheet').classList.add('show');
+}
+/* เลือกสีโน้ตบนบอร์ด (ซิงก์ข้ามเครื่องพร้อมบอร์ด) */
+function curBoardNote(){ return curItem?OF.board.find(b=>b.ref===curItem.id):null; }
+function renderColorRow(){
+  const b=curBoardNote(); if(!b) return;
+  const cur=noteColor(b,curItem.list), sw=$('#oSw'); sw.innerHTML='';
+  NOTE_COLORS.forEach(c=>{
+    const d=document.createElement('i'); d.style.background=c; if(c.toLowerCase()===cur.toLowerCase()) d.className='on';
+    d.onclick=()=>setNoteColor(c); sw.appendChild(d);
+  });
+  $('#oColorPick').value=/^#[0-9a-f]{6}$/i.test(cur)?cur:'#ffe08a';
+}
+function setNoteColor(c){
+  const b=curBoardNote(); if(!b) return;
+  if(c){ b.color=c; b.custom=true; } else { delete b.custom; b.color=LIST_COLOR[curItem.list]; }
+  saveOffice(); renderBoard(); renderColorRow();
 }
 function closeItem(){ $('#osheet').classList.remove('show'); curItem=null; }
 
@@ -2920,6 +2956,8 @@ function bindOffice(){
   window.addEventListener('pointerup',()=>{ if(!drag) killGhosts(); });
   $('#bClear').onclick=()=>{ if(!OF.board.length) return; OF.board=[]; saveOffice(); renderOffice(); toast('ล้างบอร์ดแล้ว'); };
   $('#oClose').onclick=closeItem;
+  $('#oColorPick').addEventListener('input',e=>setNoteColor(e.target.value));
+  $('#oColorReset').onclick=()=>setNoteColor(null);
   $('#osheet').onclick=e=>{ if(e.target.id==='osheet') closeItem(); };
   $('#oSave').onclick=()=>{
     if(!curItem) return;
