@@ -307,7 +307,10 @@ const BUILTIN=[
 ['ring','<ellipse cx="50" cy="50" rx="42" ry="30" fill="none" stroke="#22262b" stroke-width="4" stroke-linecap="round" transform="rotate(-8 50 50)"/>']
 ];
 const BI={}; BUILTIN.forEach(([id,inner])=>{ BI[id]={id,url:'data:image/svg+xml;charset=utf-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="300" height="300">'+inner+'</svg>')}; });
-function stkInfo(ref){ if(!ref) return null; if(ref.startsWith('b:')){ const b=BI[ref.slice(2)]; return b?{url:b.url,ar:1}:null; } const c=cmap[ref.slice(2)]; return c?{url:c.url,ar:c.h/c.w}:null; }
+const ICON_DIR='';
+const ICONS=[['sun',0.9455],['moon',0.8636],['cloud',0.7136],['bird',0.7410],['ic-sticky',1.0000],['ic-notebook',1.0000],['ic-list',1.0000],['ic-office',1.0000],['ic-project',1.0000],['ic-self',1.0000],['ic-pocket',1.0000],['ic-coin',1.0000],['ic-bank',1.0000],['ic-fortune',1.0000],['ic-bible',1.0000],['ic-gear',1.0000],['ic-food',1.0000],['ic-pm',1.0000],['ic-rain',1.0000],['ic-temp',1.0000],['fd-coffee',1.0000],['fd-burger',1.0000],['fd-pizza',1.0000],['fd-fries',1.0000],['fd-donut',1.0000],['fd-icecream',1.0000],['fd-sushi',1.0000],['fd-steak',1.0000],['fd-soup',1.0000],['fd-salad',1.0000],['fd-sandwich',1.0000],['fd-rice',1.0000],['fd-plate',1.0000],['fd-skewer',1.0000],['fd-hotpot',1.0000],['fd-bao',1.0000],['fd-pan',1.0000]];
+const IC={}; ICONS.forEach(([id,ar])=>{ IC[id]={id,ar,url:ICON_DIR+id+'.webp'}; });
+function stkInfo(ref){ if(!ref) return null; if(ref.startsWith('i:')){ const b=IC[ref.slice(2)]; return b?{url:b.url,ar:b.ar}:null; } if(ref.startsWith('b:')){ const b=BI[ref.slice(2)]; return b?{url:b.url,ar:1}:null; } const c=cmap[ref.slice(2)]; return c?{url:c.url,ar:c.h/c.w}:null; }
 
 /* ---------- store ---------- */
 const refs={}, store={q:Promise.resolve(),ready:null,fb:false};
@@ -613,8 +616,8 @@ dc.addEventListener('pointerdown',ev=>{
 /* ---------- sticker tray + maker ---------- */
 function buildTray(host,onPick){
   host.innerHTML=''; host._pick=onPick;
-  host.append(mk('div','tlabel','พื้นฐาน'));
-  const g=mk('div','tray'); BUILTIN.forEach(([id])=>{ const t=mk('div','tile'); t.append(Object.assign(new Image(),{src:BI[id].url,draggable:false})); t.onclick=()=>onPick('b:'+id); g.append(t); }); host.append(g);
+  host.append(mk('div','tlabel','ไอคอนในแอป'));
+  const g=mk('div','tray'); ICONS.forEach(([id])=>{ const t=mk('div','tile'); t.append(Object.assign(new Image(),{src:IC[id].url,draggable:false})); t.onclick=()=>onPick('i:'+id); g.append(t); }); host.append(g);
   host.append(mk('div','tlabel','ของฉัน'));
   const g2=mk('div','tray');
   const add=mk('div','tile add',ICON.plus+'<span>สร้างเอง</span>'); add.onclick=openMaker; g2.append(add);
