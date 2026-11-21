@@ -308,7 +308,7 @@ const BUILTIN=[
 ];
 const BI={}; BUILTIN.forEach(([id,inner])=>{ BI[id]={id,url:'data:image/svg+xml;charset=utf-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="300" height="300">'+inner+'</svg>')}; });
 const ICON_DIR='';
-const ICONS=[['sun',0.9455],['moon',0.8636],['cloud',0.7136],['bird',0.7410],['ic-sticky',1.0000],['ic-notebook',1.0000],['ic-list',1.0000],['ic-office',1.0000],['ic-project',1.0000],['ic-self',1.0000],['ic-pocket',1.0000],['ic-coin',1.0000],['ic-bank',1.0000],['ic-fortune',1.0000],['ic-bible',1.0000],['ic-gear',1.0000],['ic-food',1.0000],['ic-pm',1.0000],['ic-rain',1.0000],['ic-temp',1.0000],['fd-coffee',1.0000],['fd-burger',1.0000],['fd-pizza',1.0000],['fd-fries',1.0000],['fd-donut',1.0000],['fd-icecream',1.0000],['fd-sushi',1.0000],['fd-steak',1.0000],['fd-soup',1.0000],['fd-salad',1.0000],['fd-sandwich',1.0000],['fd-rice',1.0000],['fd-plate',1.0000],['fd-skewer',1.0000],['fd-hotpot',1.0000],['fd-bao',1.0000],['fd-pan',1.0000]];
+const ICONS=[['sun',0.9455],['moon',0.8636],['cloud',0.7136],['bird',0.7410],['ic-sticky',1.0000],['ic-notebook',1.0000],['ic-list',1.0000],['ic-office',1.0000],['ic-project',1.0000],['ic-self',1.0000],['ic-pocket',1.0000],['ic-coin',1.0000],['ic-bank',1.0000],['ic-fortune',1.0000],['ic-bible',1.0000],['ic-gear',1.0000],['ic-food',1.0000],['ic-pm',1.0000],['ic-rain',1.0000],['ic-temp',1.0000],['fd-coffee',1.0000],['fd-burger',1.0000],['fd-pizza',1.0000],['fd-fries',1.0000],['fd-donut',1.0000],['fd-icecream',1.0000],['fd-sushi',1.0000],['fd-steak',1.0000],['fd-soup',1.0000],['fd-salad',1.0000],['fd-sandwich',1.0000],['fd-rice',1.0000],['fd-plate',1.0000],['fd-skewer',1.0000],['fd-hotpot',1.0000],['fd-bao',1.0000],['fd-pan',1.0000],['st-a01',1.1509],['st-a02',1.0070],['st-a03',1.4000],['st-a04',0.8681],['st-a05',1.1636],['st-a06',0.8864],['st-a07',1.0000],['st-a08',0.8507],['st-a09',1.5652],['st-a10',1.0037],['st-a11',1.7041],['st-a12',0.9741],['st-a13',1.1707],['st-a14',0.8558],['st-a15',1.9773],['st-a16',0.9792],['st-a17',0.9964],['st-a18',1.1852],['st-a19',0.7299],['st-a20',1.0286],['st-a21',2.1083],['st-a22',1.0667],['st-a23',1.6667],['st-a24',1.1660],['st-a25',0.7500],['st-a26',0.6910],['st-a27',0.8021],['st-a28',0.7578],['st-a29',0.9643],['st-a30',1.0115],['st-a31',1.0000],['st-a32',1.0471],['st-a33',1.1383],['st-a34',0.3576],['st-b01',1.4257],['st-b02',1.4049],['st-b03',1.2468],['st-b04',1.1120],['st-b05',1.4694],['st-b06',1.2101],['st-b07',0.9653],['st-b08',0.9271],['st-b09',1.1383],['st-b10',1.2800],['st-b11',1.0249],['st-c01',1.8228],['st-c02',1.9726],['st-c03',1.6941],['st-c04',1.6364],['st-c05',1.7143],['st-c06',1.8344],['st-c07',1.5912],['st-c08',1.7455],['st-c09',1.2915],['st-c10',1.1660]];
 const IC={}; ICONS.forEach(([id,ar])=>{ IC[id]={id,ar,url:ICON_DIR+id+'.webp'}; });
 function stkInfo(ref){ if(!ref) return null; if(ref.startsWith('i:')){ const b=IC[ref.slice(2)]; return b?{url:b.url,ar:b.ar}:null; } if(ref.startsWith('b:')){ const b=BI[ref.slice(2)]; return b?{url:b.url,ar:1}:null; } const c=cmap[ref.slice(2)]; return c?{url:c.url,ar:c.h/c.w}:null; }
 
@@ -616,8 +616,10 @@ dc.addEventListener('pointerdown',ev=>{
 /* ---------- sticker tray + maker ---------- */
 function buildTray(host,onPick){
   host.innerHTML=''; host._pick=onPick;
-  host.append(mk('div','tlabel','ไอคอนในแอป'));
-  const g=mk('div','tray'); ICONS.forEach(([id])=>{ const t=mk('div','tile'); t.append(Object.assign(new Image(),{src:IC[id].url,draggable:false})); t.onclick=()=>onPick('i:'+id); g.append(t); }); host.append(g);
+  const addGrid=(label,list)=>{ host.append(mk('div','tlabel',label));
+    const g=mk('div','tray'); list.forEach(([id])=>{ const t=mk('div','tile'); t.append(Object.assign(new Image(),{src:IC[id].url,draggable:false,loading:'lazy'})); t.onclick=()=>onPick('i:'+id); g.append(t); }); host.append(g); };
+  addGrid('ไอคอนในแอป',ICONS.filter(([id])=>!id.startsWith('st-')));
+  addGrid('สติกเกอร์ Botanical',ICONS.filter(([id])=>id.startsWith('st-')));
   host.append(mk('div','tlabel','ของฉัน'));
   const g2=mk('div','tray');
   const add=mk('div','tile add',ICON.plus+'<span>สร้างเอง</span>'); add.onclick=openMaker; g2.append(add);
